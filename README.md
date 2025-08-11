@@ -1,6 +1,6 @@
 # ServiceTitan MCP Server
 
-An MCP server that exposes ServiceTitan APIs as tools for MCP clients (Claude Desktop, Cursor, etc.). Built with FastMCP, with coverage across all ServiceTitan APIs.
+An MCP server that exposes ServiceTitan APIs as tools for MCP clients. Built with FastMCP, with coverage across all ServiceTitan APIs.
 
 ## Requirements
 - Python 3.12+
@@ -38,6 +38,9 @@ SERVICETITAN_CLIENT_ID=your_client_id_here
 SERVICETITAN_CLIENT_SECRET=your_client_secret_here
 SERVICETITAN_APP_KEY=your_app_key_here
 SERVICETITAN_TENANT_ID=your_tenant_id_here
+# Optional: limit tool groups (comma-separated, case-insensitive)
+# SERVICETITAN_MCP_INCLUDE_GROUPS=crm,dispatch,inventory
+# SERVICETITAN_MCP_EXCLUDE_GROUPS=marketing,marketingads,marketingreputation
 EOF
 
 # Ensure it’s ignored by git
@@ -75,14 +78,6 @@ Use the ServiceTitan Developer Portal to obtain credentials and discover APIs:
 - Integration APIs: `https://api-integration.servicetitan.io` | Token: `https://auth-integration.servicetitan.io/connect/token`
 - Production APIs: `https://api.servicetitan.io` | Token: `https://auth.servicetitan.io/connect/token`
 
-### Steps to make API calls
-1) Create or get access to an Integration environment (Request Access in the portal)
-2) Create a user (admin can add you in Integration or Production)
-3) Create an App in “My Apps” and generate an Application Key (App Key)
-4) Obtain Client ID & Secret for the target tenant (via tenant admin or developer portal connections)
-5) Exchange Client ID/Secret for an access token (900s lifetime); cache and refresh
-6) Call APIs with both headers: `Authorization: Bearer <token>` and `ST-App-Key: <app key>`
-
 ### Using with this MCP server
 - Select environment per tool call via `environment` (default: production) or set per session in your client config
 - Include your tenant ID in tool parameters where required (e.g., `/v2/tenant/{tenant}/...`)
@@ -117,19 +112,14 @@ Conventions:
   - `service_agreements_get_list(tenant, ids?, customer_ids?, business_unit_ids?, status?, created_before?, created_on_or_after?, modified_before?, modified_on_or_after?, page?, page_size?, include_total?, sort?, environment?)`
   - `service_agreements_get(tenant, id, environment?)`
 
-## Logging
-Avoid stdout in stdio servers. This project configures logging to stderr by default and never writes logs to stdout.
-
-HTTP requests include a `User-Agent: servicetitan-mcp/<version>` header and use sane defaults (HTTP/2 enabled, no redirects). Secrets are never logged.
-
 ## Selective tool registration (performance)
-Many clients perform better with fewer tools. You can choose which tool groups to expose by setting environment variables:
+Many clients perform better with fewer tools. You can choose which tool groups to expose by setting these in your .env:
 
 ```bash
-# Comma-separated group names (case-insensitive)
-export SERVICETITAN_MCP_INCLUDE_GROUPS="crm,dispatch,inventory"
+# .env (comma-separated group names, case-insensitive)
+SERVICETITAN_MCP_INCLUDE_GROUPS=crm,dispatch,inventory
 # Or exclude some from the default full set
-export SERVICETITAN_MCP_EXCLUDE_GROUPS="marketing,marketingads,marketingreputation"
+SERVICETITAN_MCP_EXCLUDE_GROUPS=marketing,marketingads,marketingreputation
 ```
 
 Behavior and precedence:
@@ -145,7 +135,7 @@ Available group names correspond to subpackages under `tools/`: `accounting`, `c
 - Use `environment="integration"` for the integration API
 
 Working directory and absolute paths:
-- Use absolute paths in `claude_desktop_config.json` (working directory can be undefined for GUI apps)
+- Use absolute paths in your client config (working directory can be undefined for GUI apps)
 - Ensure the server directory and script paths are correct and readable
 
 If tools don’t appear in your client:
@@ -158,7 +148,7 @@ This section summarizes practical steps to debug MCP integrations on macOS.
 
 ### Tools overview
 - MCP Inspector: interactive testing UI for direct server calls
-- Claude Desktop Developer Tools: integration testing and log collection
+- Your client's developer tools: integration testing and log collection
 - Server logging: capture errors and performance via stderr
 
 ### Check server status in your client
@@ -169,17 +159,7 @@ This section summarizes practical steps to debug MCP integrations on macOS.
 Working directory:
 - GUI apps may not have a meaningful CWD; always use absolute paths in config
 
-Environment variables:
-- Claude inherits a limited env. Prefer setting vars via the `env` block in the server config (see above)
-
 Initialization problems:
 - Path issues (wrong executable, missing files, permissions)
 - Config errors (invalid JSON, missing fields)
 - Env problems (missing/invalid tokens)
-
-Connection problems:
-1) Check Claude logs 2) Verify the server process runs 3) Test standalone 4) Verify protocol compatibility
-
-### Logging guidance
-- For stdio servers, never write to stdout; send logs to stderr (Claude captures them in `mcp-server-*.log`)
-- Log key events: initialization, tool execution, errors, timing
