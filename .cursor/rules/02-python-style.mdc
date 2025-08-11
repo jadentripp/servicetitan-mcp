@@ -1,0 +1,12 @@
+---
+globs: *.py
+---
+# Python Style and Tooling Rules
+
+- Prefer explicit, descriptive parameter names that mirror API query params.
+- Use async HTTP via `httpx.AsyncClient` with a 30s timeout.
+- Consolidate environment base URL selection through `tools.utils.get_base_url`.
+- Import shared helpers via relative imports in subpackages, e.g., `from ..utils import make_st_request`.
+- On HTTP failures, return a short human-readable error string rather than raising.
+- When serializing responses, prefer `json.dumps(data, indent=2)`; fallback to `str(data)` if serialization fails.
+

@@ -1,0 +1,60 @@
+---
+description: Guidance for Inventory (v2) tool implementations and conventions
+globs: tools/inventory/**/*.py
+---
+# Inventory Tools Guide (v2)
+
+Use these conventions when adding or updating ServiceTitan Inventory (v2) tools.
+
+## Entry points and registration
+- Inventory tool registrar lives at [tools/inventory/__init__.py](mdc:tools/inventory/__init__.py)
+- Each topic file exposes a single registrar function (e.g., `register_inventory_returns_tools`) and attaches `@mcp.tool()` functions
+- All Inventory registrars are invoked from `register_inventory_tools(mcp)` which is wired into the global hub in [tools/__init__.py](mdc:tools/__init__.py)
+
+## HTTP helpers and environment
+- Always import helpers via relative paths: `from ..utils import get_base_url, make_st_request, make_st_post, make_st_put, make_st_patch, make_st_delete`
+- All tools accept `environment: str = "production"`
+- Build base URL with `get_base_url(environment)` and prefix endpoints with `/inventory/v2/tenant/{tenant}`
+
+## Query params and enums
+- Tri-state flags (e.g., `active`): accept case-insensitive strings and map to API casing `True|Any|False`
+- Custom fields filter:
+  - `customFields.Fields`: pass a JSON-serialized dict of name→value, e.g. `json.dumps(custom_fields_fields)`
+  - `customFields.Operator`: accept `and|or` (case-insensitive) and map to `And|Or`
+- External data filters: pass through when provided
+  - `externalDataApplicationGuid`, `externalDataKey`, `externalDataValues`
+- CSV/collection filters: accept as comma-separated strings and pass through unchanged (e.g., `ids`, `vendorIds`, `fromLocationIds`)
+- Pagination/sorting: only include when provided; set `includeTotal=True` when requested
+
+## External data update pattern
+When an endpoint supports external data updates, build a partial body only with provided fields:
+
+```python
+external_data: dict[str, Any] = {}
+if external_data_patch_mode is not None:
+    # map 'replace'|'merge' (case-insensitive) → 'Replace'|'Merge'
+    external_data["patchMode"] = mapped
+if external_data_application_guid is not None:
+    external_data["applicationGuid"] = external_data_application_guid
+if external_data_items is not None:
+    external_data["externalData"] = list(external_data_items)
+if external_data:
+    body["externalData"] = external_data
+```
+
+Examples in code:
+- Returns: [tools/inventory/returns.py](mdc:tools/inventory/returns.py)
+- Transfers: [tools/inventory/transfers.py](mdc:tools/inventory/transfers.py)
+- Trucks: [tools/inventory/trucks.py](mdc:tools/inventory/trucks.py)
+- Warehouses: [tools/inventory/warehouses.py](mdc:tools/inventory/warehouses.py)
+- Vendors: [tools/inventory/vendors.py](mdc:tools/inventory/vendors.py)
+- Purchase Orders: [tools/inventory/purchaseorders.py](mdc:tools/inventory/purchaseorders.py)
+- Adjustments: [tools/inventory/adjustments.py](mdc:tools/inventory/adjustments.py)
+
+## Serialization and errors
+- On success, pretty-print JSON: `json.dumps(data, indent=2)`; fallback to `str(data)`
+- On HTTP failure (helpers return `None`), return a short human-readable error string
+
+## Exports
+- Inventory export tools live at [tools/inventory/export.py](mdc:tools/inventory/export.py) and expose `inventory_export_*` functions (e.g., adjustments, purchase orders, returns, transfers)
+

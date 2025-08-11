@@ -1,0 +1,43 @@
+---
+alwaysApply: false
+description: Guidance for Job Planning & Management (JPM v2) tool implementations and conventions
+---
+
+# JPM Module Guide
+
+Use this guide when adding tools under [tools/jobplanningandmanagement](mdc:tools/jobplanningandmanagement) for the JPM v2 APIs.
+
+## Service and registration
+
+- Base service path: `{base}/jpm/v2/tenant/{tenant}/...`
+- Import HTTP helpers from [tools/utils.py](mdc:tools/utils.py)
+- Each module exposes a registrar function like `register_jobplanningandmanagement_<topic>_tools(mcp)` and the package `__init__.py` aggregates them in `register_jobplanningandmanagement_tools(mcp)`
+
+## Common conventions
+
+- Always accept `environment: str = "production"` and call `get_base_url(environment)`
+- Only include query params/body keys when values are provided (booleans only when True unless API requires otherwise)
+- CSV query params (e.g., `ids`, `projectManagerIds`, `businessUnitIds`, `tagTypeIds`, `externalDataValues`) are passed through as strings; callers provide comma-separated values
+- Date/time filters are accepted as ISO 8601/RFC3339 strings and passed through unchanged
+- Sorting: pass `sort` as-is (e.g. `+FieldName`, `-FieldName`)
+- Enum normalization: accept case-insensitive input and map to API casing
+  - Examples: job/appointment statuses, priorities (`Low|Normal|High|Urgent`)
+- Tri-state flags: accept `True|Any|False` case-insensitive and map to API casing; reject invalid inputs concisely
+- Success returns pretty JSON (`json.dumps(..., indent=2)`); failures return concise human-readable strings
+
+## Modules implemented
+
+- Appointments: list, add, get, delete, confirm/remove-confirmation, hold/remove-hold, reschedule, update-special-instructions
+- Jobs: list, create, update, get, cancel, get-canceled-logs, get-history, get-notes, create-note, remove-cancellation, get-cancel-reasons, get-custom-field-types
+- Job Types: list, create, update, get
+- Job Cancel/Hold Reasons: list
+- Projects: list, create, update, get, get-notes/create-note, attach/detach job, get-custom-field-types
+- Project Statuses and Substatuses: list + get
+- Export feeds: appointments, jobs, job notes, project notes, job canceled logs, job history
+
+## Examples
+
+- See [tools/jobplanningandmanagement/appointments.py](mdc:tools/jobplanningandmanagement/appointments.py) for list filtering, tri-state handling and POST payload construction.
+- See [tools/jobplanningandmanagement/jobs.py](mdc:tools/jobplanningandmanagement/jobs.py) for extensive filter coverage and PATCH update patterns.
+- See [tools/jobplanningandmanagement/projects.py](mdc:tools/jobplanningandmanagement/projects.py) for attach/detach job endpoints and custom field types.
+

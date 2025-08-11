@@ -1,0 +1,26 @@
+---
+alwaysApply: true
+---
+# Tool Module Patterns
+
+Follow these patterns when adding new tools for ServiceTitan APIs.
+
+- Each module defines a single registrar function: `register_<area>_<topic>_tools(mcp)` or `register_<group>_tools(mcp)` and decorates tool functions with `@mcp.tool()`.
+- Import HTTP helpers using relative imports inside subpackages: `from ..utils import get_base_url, make_st_request, make_st_post, make_st_put, make_st_patch, make_st_delete`.
+- Always accept an `environment: str = "production"` parameter and call `get_base_url(environment)`.
+- Build URLs as: `{base}/<service>/v2/tenant/{tenant}/...` (e.g., Dispatch is `/dispatch/v2/...`, Forms is `/forms/v2/...`, Equipment Systems is `/equipmentsystems/v2/...`).
+- For query params and bodies, only include fields when values are not `None` (booleans only when True unless API requires otherwise). Convert sequences to lists.
+- Make HTTP requests exclusively via helpers:
+  - GET: `make_st_request`
+  - POST: `make_st_post`
+  - PUT: `make_st_put`
+  - PATCH: `make_st_patch`
+  - DELETE: `make_st_delete`
+- On failure, return a short human-readable error string. On success, pretty-print JSON: `json.dumps(data, indent=2)`; fallback to `str(data)` if serialization fails.
+- Validate and normalize enumerations and tri-state flags (see [05-query-param-and-enum-mapping.mdc](mdc:05-query-param-and-enum-mapping.mdc)).
+
+Key files for reference:
+- MCP server entry: [servicetitan-mcp.py](mdc:servicetitan-mcp.py)
+- Tool hub: [tools/__init__.py](mdc:tools/__init__.py)
+- HTTP helpers: [tools/utils.py](mdc:tools/utils.py)
+

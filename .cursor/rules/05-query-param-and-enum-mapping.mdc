@@ -1,0 +1,40 @@
+---
+description: Query parameter building and enum/tri-state normalization
+---
+# Query Param & Enum Normalization
+
+- Only include params when values are provided. Include booleans only when True unless API requires otherwise.
+- Tri-state flags (e.g., `active`): accept case-insensitive `True|Any|False` and map to exact casing: `{"true": "True", "any": "Any", "false": "False"}`.
+- Enum normalization: accept case-insensitive input and map to API enums where applicable (e.g., `Campaign|AdGroup|Keyword`, suppression reasons `Unsubscribe|Bounce|SpamReport|ManualUnsubscribe|NeverEmail`).
+- CSV strings should be passed as-is; arrays should be lists so the HTTP client encodes repeated query params.
+- Dates/times are ISO 8601/RFC3339 strings; pass-through without transformation.
+
+---
+alwaysApply: true
+---
+# Query Param and Enum Mapping
+
+Normalize and pass-through query parameters to mirror ServiceTitan APIs.
+
+- Tri-state flags: For values like `active` that accept `True | Any | False`, accept case-insensitive strings and map to exact casing required by the API.
+  - Example: input `"any"` -> query `active=Any`
+  - Reject invalid values with a concise error message.
+
+- Enum normalization: Accept case-insensitive input and map to API enums (e.g., `Normal|OnCall|TimeOff`, `Never|Daily|Weekly`, `Any|Published|Unpublished`, etc.).
+
+- Pagination and totals:
+  - Include `page` and `pageSize` only when provided.
+  - Include `includeTotal=True` when requested.
+
+- Date/time filters: Pass ISO 8601/RFC3339 strings directly (no transformation).
+
+- Lists and CSVs:
+  - For CSV query strings (e.g., `ids`, `locationIds`), pass through the string as-is.
+  - For list-valued params (e.g., `owners[0].type`), expand into repeated indexed params as needed.
+
+- Request bodies: Build dictionaries dynamically; only include keys when values are not `None`. Convert sequences to lists; coerce numeric IDs to int and monetary/decimal to float when appropriate.
+
+Examples in code:
+- See dispatch: [tools/dispatch/appointmentassignments.py](mdc:tools/dispatch/appointmentassignments.py)
+- See equipment systems: [tools/equipmentsystems/installedequipment.py](mdc:tools/equipmentsystems/installedequipment.py)
+

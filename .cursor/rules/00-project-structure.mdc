@@ -1,0 +1,40 @@
+---
+alwaysApply: true
+---
+# Project Structure and Entry Points
+
+- MCP server entry point: [servicetitan-mcp.py](mdc:servicetitan-mcp.py)
+  - Initializes FastMCP and calls `register_all_tools(mcp)`
+
+- Tool registration hub: [tools/__init__.py](mdc:tools/__init__.py)
+  - Exposes `register_all_tools(mcp)` which registers all tool groups (e.g., Accounting, CRM, Dispatch, Inventory, Forms, JobBooking, JPM, EquipmentSystems, Marketing, Marketing Ads, Marketing Reputation)
+
+- Shared HTTP helpers: [tools/utils.py](mdc:tools/utils.py)
+  - `get_base_url(environment)` selects Production vs Integration base URL
+  - `build_headers()` adds `Authorization: Bearer SERVICETITAN_ACCESS_TOKEN` and optional `ST-App-Key`
+  - Async helpers: `make_st_request`, `make_st_post`, `make_st_put`, `make_st_patch`, `make_st_delete`
+
+# Tool Module Patterns
+
+- Each subpackage exposes a single registrar function: `register_<group>_tools(mcp)` or `register_<area>_<topic>_tools(mcp)` which defines `@mcp.tool()` functions.
+- Use relative imports for helpers inside subpackages: `from ..utils import get_base_url, make_st_request, make_st_post, make_st_put, make_st_patch, make_st_delete`.
+- All ServiceTitan HTTP calls must go through the helpers with proper headers/timeouts.
+- Tools should return pretty-printed JSON strings on success; concise error messages on failure.
+- Always accept an `environment: str = "production"` parameter and call `get_base_url(environment)`.
+
+# URL Construction
+
+- Build URLs as `{base}/<service>/v2/tenant/{tenant}/...` (e.g., Dispatch `/dispatch/v2/...`, Forms `/forms/v2/...`, Equipment Systems `/equipmentsystems/v2/...`, Marketing `/marketing/v2/...`, Marketing Ads `/marketingads/v2/...`, Marketing Reputation `/marketingreputation/v2/...`).
+
+# Query and Body Conventions
+
+- Include query params only when provided; include booleans only when `True` unless API requires otherwise.
+- Normalize enums and tri-state flags; see [05-query-param-and-enum-mapping.mdc](mdc:.cursor/rules/05-query-param-and-enum-mapping.mdc).
+- Request bodies are dicts constructed dynamically with provided fields only.
+
+# References
+
+- Accounting examples: [tools/accounting/invoices.py](mdc:tools/accounting/invoices.py), [tools/accounting/payments.py](mdc:tools/accounting/payments.py)
+- Dispatch example: [tools/dispatch/appointmentassignments.py](mdc:tools/dispatch/appointmentassignments.py)
+- JPM example: [tools/jobplanningandmanagement/jobs.py](mdc:tools/jobplanningandmanagement/jobs.py)
+

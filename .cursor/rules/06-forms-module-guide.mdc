@@ -1,0 +1,22 @@
+---
+description: Guidance for Forms (v2) tool implementations
+globs: tools/forms/*.py
+---
+# Forms (v2) Module Guide
+
+- Base path: `/forms/v2/tenant/{tenant}`.
+- Modules:
+  - `forms_get_forms`: mirrors Form_GetForms; supports filters `hasConditionalLogic`, `hasTriggers`, `name`, `status`, `ids`, `active`, date filters, pagination, and `sort`.
+  - `forms_get_form_submissions`: mirrors FormSubmission_GetFormSubmissions; supports `formIds`, `active`, `createdById`, `status`, `submittedOnOrAfter`, `submittedBefore`, `ownerType`, `owners[]`, and pagination.
+  - Jobs attachments helpers: `forms_get_job_attachment`, `forms_create_job_attachment`, `forms_get_job_attachments`.
+
+- Enum handling:
+  - `status` (forms): `Any|Published|Unpublished`.
+  - `status` (submissions): `Started|Completed|Any`.
+  - `ownerType`: `Job|Call|Customer|Location|Equipment|Technician|JobAppointment|Membership|Truck|Project|ServiceAgreement|InvoiceItem`.
+  - `active`: `True|Any|False` tri-state.
+
+- Owners param: Expand each owner as indexed pairs `owners[i].type` and `owners[i].id`.
+
+- Responses: pretty-print JSON; concise error string on failure.
+

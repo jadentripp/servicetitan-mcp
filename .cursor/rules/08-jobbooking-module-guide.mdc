@@ -1,0 +1,40 @@
+---
+alwaysApply: false
+description: Guidance for JobBooking (v2) tool implementations and conventions
+---
+
+# JobBooking Module Guide
+
+Follow these patterns when adding tools for ServiceTitan Job Booking and Call Experience (JBCE) APIs.
+
+- Base service path: `{base}/jbce/v2/tenant/{tenant}/...`
+- Shared HTTP helpers: see [tools/utils.py](mdc:tools/utils.py)
+  - `get_base_url(environment)` selects Production vs Integration
+  - `make_st_request`, `make_st_post`, `make_st_patch`, `make_st_delete`
+- Package location: [tools/jobbooking](mdc:tools/jobbooking)
+- Registrar naming: `register_jobbooking_<topic>_tools(mcp)` and export one `register_jobbooking_tools(mcp)` from the package `__init__` when grouping multiple topics
+
+## Parameter and enum handling
+
+- Include query params only when provided
+- Pagination: `page`, `pageSize`, `includeTotal` (only include `includeTotal` when True)
+- Tri-state flags: accept case-insensitive strings and map to exact casing required by the API
+  - Example: `active` ∈ {`True`, `Any`, `False`} → map to `{"true":"True","any":"Any","false":"False"}`
+  - Reject invalid values with a concise error string
+- Sort: pass `sort` as-is (e.g. `+FieldName` or `-FieldName`). Typical fields for JBCE lists include `Id`, `ModifiedOn`, `CreatedOn`
+- Date/time filters: pass ISO 8601/RFC3339 strings directly (`createdBefore`, `createdOnOrAfter`, `modifiedBefore`, `modifiedOnOrAfter`)
+
+## Return values and errors
+
+- On success, pretty-print JSON: `json.dumps(data, indent=2)`; fallback to `str(data)`
+- On failure (network, status, or empty body), return a concise human-friendly error string
+
+## Example: Call Reasons
+
+See [tools/jobbooking/callreasons.py](mdc:tools/jobbooking/callreasons.py)
+
+- Tool name: `jobbooking_get_call_reasons`
+- URL: `/jbce/v2/tenant/{tenant}/call-reasons`
+- Supported params: `page`, `pageSize`, `includeTotal`, `active`, `createdBefore`, `createdOnOrAfter`, `modifiedBefore`, `modifiedOnOrAfter`, `sort`, `environment`
+- Always accept `environment: str = "production"` and call `get_base_url(environment)`
+

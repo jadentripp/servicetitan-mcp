@@ -1,0 +1,34 @@
+---
+alwaysApply: true
+---
+# Project Structure and Entry Points
+
+- MCP server entry point: [servicetitan-mcp.py](mdc:servicetitan-mcp.py)
+  - Initializes FastMCP and calls `register_all_tools(mcp)`
+
+- Tool registration hub: [tools/__init__.py](mdc:tools/__init__.py)
+  - Exposes `register_all_tools(mcp)` which registers all tool groups (e.g., Accounting, CRM)
+
+- Shared HTTP helpers: [tools/utils.py](mdc:tools/utils.py)
+  - `get_base_url(environment)` picks Production or Integration base URL
+  - `build_headers()` includes `Authorization: Bearer SERVICETITAN_ACCESS_TOKEN` and optional `ST-App-Key`
+  - Async helpers: `make_st_request`, `make_st_post`, `make_st_patch`, `make_st_delete`
+
+- Accounting tools package: [tools/accounting/__init__.py](mdc:tools/accounting/__init__.py)
+  - Registers all Accounting tool modules (exports, invoices, payments, GL accounts, etc.)
+
+- Example tool modules (patterns to follow):
+  - [tools/accounting/export.py](mdc:tools/accounting/export.py)
+  - [tools/accounting/invoices.py](mdc:tools/accounting/invoices.py)
+  - [tools/accounting/payments.py](mdc:tools/accounting/payments.py)
+  - [tools/accounting/journalentries.py](mdc:tools/accounting/journalentries.py)
+
+- CRM scaffold: [tools/crm/export.py](mdc:tools/crm/export.py)
+
+# Conventions
+
+- Each tool module exposes a single function `register_<group>_tools(mcp)` that attaches `@mcp.tool()` functions.
+- Import shared HTTP helpers from `tools.utils` using relative imports inside subpackages (e.g., `from ..utils import make_st_request`).
+- All ServiceTitan HTTP calls must go through the helpers with proper headers and timeouts.
+- Tools generally return pretty-printed JSON strings; return a concise error message on failure.
+

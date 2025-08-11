@@ -1,0 +1,14 @@
+[project]
+name = "servicetitan-mcp"
+version = "0.1.0"
+description = "An MCP server that exposes ServiceTitan APIs as tools for AI clients (e.g., Claude Desktop, Cursor). Built with FastMCP, includes dozens of endpoints across Accounting, CRM, Dispatch, Inventory, JPM, and more."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+  { name = "Jaden Tripp", email = "jadenitripp@gmail.com" }
+]
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.12.4",
+    "python-dotenv>=1.0.1",
+]

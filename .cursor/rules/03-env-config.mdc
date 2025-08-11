@@ -1,0 +1,36 @@
+---
+description: Environment variables and auth for ServiceTitan endpoints
+---
+# Environment & Auth
+
+- Required env vars:
+  - `SERVICETITAN_ACCESS_TOKEN`: Bearer token for API auth
+  - `SERVICETITAN_APP_KEY`: Optional `ST-App-Key` header
+
+- Base URLs determined by [tools/utils.py](mdc:tools/utils.py)`get_base_url(environment)`:
+  - Production: `https://api.servicetitan.io`
+  - Integration: `https://api-integration.servicetitan.io`
+
+- Always use helpers to make requests:
+  - `make_st_request` (GET)
+  - `make_st_post` (POST)
+  - `make_st_put` (PUT)
+  - `make_st_patch` (PATCH)
+  - `make_st_delete` (DELETE)
+
+- All tools accept `environment: str = "production"` to switch environments.
+
+---
+alwaysApply: false
+description: Environment variables and auth for ServiceTitan endpoints
+---
+# Environment and Auth
+
+- Required environment variables for ServiceTitan requests:
+  - `SERVICETITAN_ACCESS_TOKEN`: OAuth access token (sets `Authorization: Bearer ...`).
+  - `SERVICETITAN_APP_KEY` (optional): Adds `ST-App-Key` header if present.
+
+- Default environment is production. To use integration, pass `environment="integration"` to tools.
+
+- All requests include `Accept: application/json` and `Content-Type: application/json`.
+
